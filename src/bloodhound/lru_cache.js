@@ -10,7 +10,7 @@ var LruCache = (function() {
   'use strict';
 
   function LruCache(maxSize) {
-    this.maxSize = _.isNumber(maxSize) ? maxSize : 100;
+    this.maxSize = _.isNumber(maxSize) ? maxSize : Number.MAX_VALUE;
     this.reset();
 
     // if max size is less than 0, provide a noop cache
