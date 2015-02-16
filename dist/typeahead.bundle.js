@@ -1,7 +1,7 @@
 /*!
  * typeahead.js 0.10.5
  * https://github.com/twitter/typeahead.js
- * Copyright 2013-2014 Twitter, Inc. and other contributors; Licensed MIT
+ * Copyright 2013-2015 Twitter, Inc. and other contributors; Licensed MIT
  */
 
 (function($) {
@@ -161,7 +161,7 @@
     var LruCache = function() {
         "use strict";
         function LruCache(maxSize) {
-            this.maxSize = _.isNumber(maxSize) ? maxSize : 100;
+            this.maxSize = _.isNumber(maxSize) ? maxSize : Number.MAX_VALUE;
             this.reset();
             if (this.maxSize <= 0) {
                 this.set = this.get = $.noop;
@@ -399,6 +399,9 @@
             if (!o.datumTokenizer || !o.queryTokenizer) {
                 $.error("datumTokenizer and queryTokenizer are both required");
             }
+            this.dupDetector = o.dupDetector || function() {
+                return false;
+            };
             this.datumTokenizer = o.datumTokenizer;
             this.queryTokenizer = o.queryTokenizer;
             this.reset();
@@ -411,6 +414,14 @@
             add: function(data) {
                 var that = this;
                 data = _.isArray(data) ? data : [ data ];
+                if (that.datums.length > 0) {
+                    data = _.filter(data, function(newDatum) {
+                        var duplicates = _.filter(that.datums, function(existingDatum) {
+                            return that.dupDetector(existingDatum, newDatum);
+                        });
+                        return duplicates.length == 0;
+                    });
+                }
                 _.each(data, function(datum) {
                     var id, tokens;
                     id = that.datums.push(datum) - 1;
@@ -602,7 +613,8 @@
             this.cacheKey = this.prefetch ? this.prefetch.cacheKey || this.prefetch.url : null;
             this.index = new SearchIndex({
                 datumTokenizer: o.datumTokenizer,
-                queryTokenizer: o.queryTokenizer
+                queryTokenizer: o.queryTokenizer,
+                dupDetector: o.dupDetector
             });
             this.storage = this.cacheKey ? new PersistentStorage(this.cacheKey) : null;
         }
