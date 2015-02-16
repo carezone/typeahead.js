@@ -26,6 +26,7 @@ var Dataset = (function() {
 
     // tracks the last query the dataset was updated for
     this.query = null;
+    this.renderStaleQueries = o.renderStaleQueries || false;
 
     this.highlight = !!o.highlight;
     this.name = o.name || _.getUniqueId();
@@ -150,9 +151,9 @@ var Dataset = (function() {
       this.source(query, render);
 
       function render(suggestions) {
-        // if the update has been canceled or if the query has changed
+        // if the update has been canceled or (optionally) if the query has changed
         // do not render the suggestions as they've become outdated
-        if (!that.canceled && query === that.query) {
+        if (!that.canceled && (that.renderStaleQueries || query === that.query)) {
           that._render(query, suggestions);
         }
       }

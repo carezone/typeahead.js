@@ -30,6 +30,8 @@
     this.local = oParser.local(o);
     this.prefetch = oParser.prefetch(o);
     this.remote = oParser.remote(o);
+    this.baseSearchQuery = null;
+    this.currentQuery = null;
 
     this.cacheKey = this.prefetch ?
       (this.prefetch.cacheKey || this.prefetch.url) : null;
@@ -164,43 +166,37 @@
       this.index.add(data);
     },
 
+    /**
+     * The main entry point into the search query.
+     * @param query
+     * @param cb
+     */
     get: function get(query, cb) {
-      var that = this, matches = [], cacheHit = false;
+      var that = this;
 
-      matches = this.index.get(query);
-      matches = this.sorter(matches).slice(0, this.limit);
+      this.currentQuery = query;
 
-      matches.length < this.limit ?
-        (cacheHit = this._getFromRemote(query, returnRemoteMatches)) :
-        this._cancelLastRemoteRequest();
-
-      // if a cache hit occurred, skip rendering local matches
-      // because the rendering of local/remote matches is already
-      // in the event loop
-      if (!cacheHit) {
-        // only render if there are some local suggestions or we're
-        // going to the network to backfill
-        (matches.length > 0 || !this.transport) && cb && cb(matches);
+      if (query.indexOf(this.baseSearchQuery) != 0) {
+        this.baseSearchQuery = query;
+        this._getFromRemote(query, addRemoteData);
+      } else {
+        searchMatches();
       }
 
-      function returnRemoteMatches(remoteMatches) {
-        var matchesWithBackfill = matches.slice(0);
-
-        _.each(remoteMatches, function(remoteMatch) {
-          var isDuplicate;
-
-          // checks for duplicates
-          isDuplicate = _.some(matchesWithBackfill, function(match) {
-            return that.dupDetector(remoteMatch, match);
-          });
-
-          !isDuplicate && matchesWithBackfill.push(remoteMatch);
-
-          // if we're at the limit, we no longer need to process
-          // the remote results and can break out of the each loop
-          return matchesWithBackfill.length < that.limit;
+      function addRemoteData(remoteData) {
+        _.each(remoteData, function(remoteDatum) {
+          that.add(remoteDatum);
         });
-        cb && cb(that.sorter(matchesWithBackfill));
+        searchMatches();
+      }
+
+      function searchMatches() {
+        var matches = [];
+        matches = that.index.get(that.currentQuery); // use most recent query
+        matches = that.sorter(matches).slice(0, that.limit);
+        if (cb) {
+          cb(matches);
+        }
       }
     },
 

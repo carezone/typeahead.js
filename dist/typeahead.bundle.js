@@ -593,6 +593,157 @@
     (function(root) {
         "use strict";
         var old, keys;
+        old = root.Boomer;
+        keys = {
+            data: "data",
+            protocol: "protocol",
+            thumbprint: "thumbprint"
+        };
+        root.Boomer = Boomer;
+        function Boomer(o) {
+            if (!o || !o.local && !o.prefetch && !o.remote) {
+                $.error("one of local, prefetch, or remote is required");
+            }
+            this.limit = o.limit || 5;
+            this.sorter = getSorter(o.sorter);
+            this.dupDetector = o.dupDetector || ignoreDuplicates;
+            this.local = oParser.local(o);
+            this.prefetch = oParser.prefetch(o);
+            this.remote = oParser.remote(o);
+            this.baseSearchQuery = null;
+            this.currentQuery = null;
+            this.cacheKey = this.prefetch ? this.prefetch.cacheKey || this.prefetch.url : null;
+            this.index = new SearchIndex({
+                datumTokenizer: o.datumTokenizer,
+                queryTokenizer: o.queryTokenizer,
+                dupDetector: o.dupDetector
+            });
+            this.storage = this.cacheKey ? new PersistentStorage(this.cacheKey) : null;
+        }
+        Boomer.noConflict = function noConflict() {
+            root.Boomer = old;
+            return Boomer;
+        };
+        Boomer.tokenizers = tokenizers;
+        _.mixin(Boomer.prototype, {
+            _loadPrefetch: function loadPrefetch(o) {
+                var that = this, serialized, deferred;
+                if (serialized = this._readFromStorage(o.thumbprint)) {
+                    this.index.bootstrap(serialized);
+                    deferred = $.Deferred().resolve();
+                } else {
+                    deferred = $.ajax(o.url, o.ajax).done(handlePrefetchResponse);
+                }
+                return deferred;
+                function handlePrefetchResponse(resp) {
+                    that.clear();
+                    that.add(o.filter ? o.filter(resp) : resp);
+                    that._saveToStorage(that.index.serialize(), o.thumbprint, o.ttl);
+                }
+            },
+            _getFromRemote: function getFromRemote(query, cb) {
+                var that = this, url, uriEncodedQuery;
+                if (!this.transport) {
+                    return;
+                }
+                query = query || "";
+                uriEncodedQuery = encodeURIComponent(query);
+                url = this.remote.replace ? this.remote.replace(this.remote.url, query) : this.remote.url.replace(this.remote.wildcard, uriEncodedQuery);
+                return this.transport.get(url, this.remote.ajax, handleRemoteResponse);
+                function handleRemoteResponse(err, resp) {
+                    err ? cb([]) : cb(that.remote.filter ? that.remote.filter(resp) : resp);
+                }
+            },
+            _cancelLastRemoteRequest: function cancelLastRemoteRequest() {
+                this.transport && this.transport.cancel();
+            },
+            _saveToStorage: function saveToStorage(data, thumbprint, ttl) {
+                if (this.storage) {
+                    this.storage.set(keys.data, data, ttl);
+                    this.storage.set(keys.protocol, location.protocol, ttl);
+                    this.storage.set(keys.thumbprint, thumbprint, ttl);
+                }
+            },
+            _readFromStorage: function readFromStorage(thumbprint) {
+                var stored = {}, isExpired;
+                if (this.storage) {
+                    stored.data = this.storage.get(keys.data);
+                    stored.protocol = this.storage.get(keys.protocol);
+                    stored.thumbprint = this.storage.get(keys.thumbprint);
+                }
+                isExpired = stored.thumbprint !== thumbprint || stored.protocol !== location.protocol;
+                return stored.data && !isExpired ? stored.data : null;
+            },
+            _initialize: function initialize() {
+                var that = this, local = this.local, deferred;
+                deferred = this.prefetch ? this._loadPrefetch(this.prefetch) : $.Deferred().resolve();
+                local && deferred.done(addLocalToIndex);
+                this.transport = this.remote ? new Transport(this.remote) : null;
+                return this.initPromise = deferred.promise();
+                function addLocalToIndex() {
+                    that.add(_.isFunction(local) ? local() : local);
+                }
+            },
+            initialize: function initialize(force) {
+                return !this.initPromise || force ? this._initialize() : this.initPromise;
+            },
+            add: function add(data) {
+                this.index.add(data);
+            },
+            get: function get(query, cb) {
+                var that = this;
+                this.currentQuery = query;
+                if (query.indexOf(this.baseSearchQuery) != 0) {
+                    this.baseSearchQuery = query;
+                    this._getFromRemote(query, addRemoteData);
+                } else {
+                    searchMatches();
+                }
+                function addRemoteData(remoteData) {
+                    _.each(remoteData, function(remoteDatum) {
+                        that.add(remoteDatum);
+                    });
+                    searchMatches();
+                }
+                function searchMatches() {
+                    var matches = [];
+                    matches = that.index.get(that.currentQuery);
+                    matches = that.sorter(matches).slice(0, that.limit);
+                    if (cb) {
+                        cb(matches);
+                    }
+                }
+            },
+            clear: function clear() {
+                this.index.reset();
+            },
+            clearPrefetchCache: function clearPrefetchCache() {
+                this.storage && this.storage.clear();
+            },
+            clearRemoteCache: function clearRemoteCache() {
+                this.transport && Transport.resetCache();
+            },
+            ttAdapter: function ttAdapter() {
+                return _.bind(this.get, this);
+            }
+        });
+        return Boomer;
+        function getSorter(sortFn) {
+            return _.isFunction(sortFn) ? sort : noSort;
+            function sort(array) {
+                return array.sort(sortFn);
+            }
+            function noSort(array) {
+                return array;
+            }
+        }
+        function ignoreDuplicates() {
+            return false;
+        }
+    })(this);
+    (function(root) {
+        "use strict";
+        var old, keys;
         old = root.Bloodhound;
         keys = {
             data: "data",
@@ -1174,6 +1325,7 @@
                 $.error("invalid dataset name: " + o.name);
             }
             this.query = null;
+            this.renderStaleQueries = o.renderStaleQueries || false;
             this.highlight = !!o.highlight;
             this.name = o.name || _.getUniqueId();
             this.source = o.source;
@@ -1252,7 +1404,7 @@
                 this.canceled = false;
                 this.source(query, render);
                 function render(suggestions) {
-                    if (!that.canceled && query === that.query) {
+                    if (!that.canceled && (that.renderStaleQueries || query === that.query)) {
                         that._render(query, suggestions);
                     }
                 }

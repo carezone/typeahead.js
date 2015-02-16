@@ -564,6 +564,7 @@
                 $.error("invalid dataset name: " + o.name);
             }
             this.query = null;
+            this.renderStaleQueries = o.renderStaleQueries || false;
             this.highlight = !!o.highlight;
             this.name = o.name || _.getUniqueId();
             this.source = o.source;
@@ -642,7 +643,7 @@
                 this.canceled = false;
                 this.source(query, render);
                 function render(suggestions) {
-                    if (!that.canceled && query === that.query) {
+                    if (!that.canceled && (that.renderStaleQueries || query === that.query)) {
                         that._render(query, suggestions);
                     }
                 }

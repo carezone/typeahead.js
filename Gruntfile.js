@@ -4,6 +4,16 @@ var semver = require('semver'),
       common: [
       'src/common/utils.js'
       ],
+      boomer: [
+      'src/bloodhound/version.js',
+      'src/bloodhound/tokenizers.js',
+      'src/bloodhound/lru_cache.js',
+      'src/bloodhound/persistent_storage.js',
+      'src/bloodhound/transport.js',
+      'src/bloodhound/search_index.js',
+      'src/bloodhound/options_parser.js',
+      'src/bloodhound/boomer.js'
+      ],
       bloodhound: [
       'src/bloodhound/version.js',
       'src/bloodhound/tokenizers.js',
@@ -64,6 +74,23 @@ module.exports = function(grunt) {
         src: files.common.concat(files.bloodhound),
         dest: '<%= buildDir %>/bloodhound.min.js'
       },
+      boomer: {
+        options: {
+          mangle: false,
+          beautify: true,
+          compress: false
+        },
+        src: files.common.concat(files.boomer),
+        dest: '<%= buildDir %>/boomer.js'
+      },
+      boomerMin: {
+        options: {
+          mangle: true,
+          compress: true
+        },
+        src: files.common.concat(files.boomer),
+        dest: '<%= buildDir %>/boomer.min.js'
+      },
       typeahead: {
         options: {
           mangle: false,
@@ -89,7 +116,7 @@ module.exports = function(grunt) {
           beautify: true,
           compress: false
         },
-        src: files.common.concat(files.bloodhound, files.typeahead),
+        src: files.common.concat(files.boomer, files.bloodhound, files.typeahead),
         dest: '<%= buildDir %>/typeahead.bundle.js'
 
       },
@@ -98,7 +125,7 @@ module.exports = function(grunt) {
           mangle: true,
           compress: true
         },
-        src: files.common.concat(files.bloodhound, files.typeahead),
+        src: files.common.concat(files.boomer, files.bloodhound, files.typeahead),
         dest: '<%= buildDir %>/typeahead.bundle.min.js'
       }
     },
