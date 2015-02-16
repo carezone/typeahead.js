@@ -17,6 +17,7 @@ var SearchIndex = (function() {
       $.error('datumTokenizer and queryTokenizer are both required');
     }
 
+    this.dupDetector = o.dupDetector || function() { return false; };
     this.datumTokenizer = o.datumTokenizer;
     this.queryTokenizer = o.queryTokenizer;
 
@@ -39,6 +40,14 @@ var SearchIndex = (function() {
       var that = this;
 
       data = _.isArray(data) ? data : [data];
+      if (that.datums.length > 0) {
+        data = _.filter(data, function(newDatum) {
+          var duplicates = _.filter(that.datums, function(existingDatum) {
+            return that.dupDetector(existingDatum, newDatum);
+          });
+          return duplicates.length == 0;
+        });
+      }
 
       _.each(data, function(datum) {
         var id, tokens;

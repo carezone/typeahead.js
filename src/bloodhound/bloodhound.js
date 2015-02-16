@@ -37,7 +37,8 @@
     // the backing data structure used for fast pattern matching
     this.index = new SearchIndex({
       datumTokenizer: o.datumTokenizer,
-      queryTokenizer: o.queryTokenizer
+      queryTokenizer: o.queryTokenizer,
+      dupDetector: o.dupDetector
     });
 
     // only initialize storage if there's a cacheKey otherwise
