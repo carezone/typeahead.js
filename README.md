@@ -9,8 +9,9 @@ Inspired by [twitter.com]'s autocomplete search functionality, typeahead.js is
 a flexible JavaScript library that provides a strong foundation for building 
 robust typeaheads.
 
-The typeahead.js library consists of 2 components: the suggestion engine, 
-[Bloodhound], and the UI view, [Typeahead]. 
+The Carezone typeahead.js library consists of ~~2~~ 3 components: the original
+suggestion engine [Bloodhound], the Carezone "remote" suggestion engine [Boomer],
+and the slightly modified from the original UI view, [Typeahead].
 The suggestion engine is responsible for computing suggestions for a given 
 query. The UI view is responsible for rendering suggestions and handling DOM 
 interactions. Both components can be used separately, but when used together, 
@@ -34,12 +35,13 @@ Preferred method:
 Other methods:
 * [Download zipball of latest release][zipball].
 * Download the latest dist files individually:
-  * *[bloodhound.js]* (standalone suggestion engine)
+  * *[bloodhound.js]* (standalone original suggestion engine)
+  * *[boomer.js]* (standalone Carezone remote-based suggestion engine)
   * *[typeahead.jquery.js]* (standalone UI view)
-  * *[typeahead.bundle.js]* (*bloodhound.js* + *typeahead.jquery.js*)
+  * *[typeahead.bundle.js]* (*bloodhound.js* + *boomer.js* + *typeahead.jquery.js*)
   * *[typeahead.bundle.min.js]*
 
-**Note:** both *bloodhound.js* and *typeahead.jquery.js* have a dependency on 
+**Note:** *bloodhound.js*, *boomer.js*, and *typeahead.jquery.js* have a dependency on
 [jQuery] 1.9+.
 
 <!-- section links -->
@@ -56,9 +58,11 @@ Documentation
 -------------
 
 * [Typeahead Docs]
+* [Boomer Docs]
 * [Bloodhound Docs]
 
 [Typeahead Docs]: https://github.com/twitter/typeahead.js/blob/master/doc/jquery_typeahead.md
+[Boomer Docs]: https://github.com/carezone/typeahead.js/blob/master/doc/boomer.md
 [Bloodhound Docs]: https://github.com/twitter/typeahead.js/blob/master/doc/bloodhound.md
 
 Examples
