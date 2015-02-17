@@ -604,7 +604,7 @@
             if (!o || !o.local && !o.prefetch && !o.remote) {
                 $.error("one of local, prefetch, or remote is required");
             }
-            this.limit = o.limit || 5;
+            this.limit = o.limit;
             this.sorter = getSorter(o.sorter);
             this.dupDetector = o.dupDetector || ignoreDuplicates;
             this.local = oParser.local(o);
@@ -708,7 +708,10 @@
                 function searchMatches() {
                     var matches = [];
                     matches = that.index.get(that.currentQuery);
-                    matches = that.sorter(matches).slice(0, that.limit);
+                    matches = that.sorter(matches);
+                    if (that.limit) {
+                        matches = matches.slice(0, that.limit);
+                    }
                     if (cb) {
                         cb(matches);
                     }
