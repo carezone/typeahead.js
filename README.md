@@ -12,7 +12,7 @@ robust typeaheads.
 The Carezone typeahead.js library consists of ~~2~~ 3 components: the original
 suggestion engine [Bloodhound], the Carezone "remote" suggestion engine [Boomer],
 and the slightly modified from the original UI view, [Typeahead].
-The suggestion engine is responsible for computing suggestions for a given 
+The suggestion engines are responsible for computing suggestions for a given
 query. The UI view is responsible for rendering suggestions and handling DOM 
 interactions. Both components can be used separately, but when used together, 
 they can provide a rich typeahead experience.
@@ -22,6 +22,7 @@ they can provide a rich typeahead experience.
 [gh-page]: http://twitter.github.io/typeahead.js/
 [twitter.com]: https://twitter.com
 [Bloodhound]: https://github.com/twitter/typeahead.js/blob/master/doc/bloodhound.md
+[Boomer]: https://github.com/carezone/typeahead.js/blob/master/doc/boomer.md
 [Typeahead]: https://github.com/twitter/typeahead.js/blob/master/doc/jquery_typeahead.md
 
 Getting Started
@@ -49,6 +50,8 @@ Other methods:
 [Bower]: http://bower.io/
 [zipball]: http://twitter.github.com/typeahead.js/releases/latest/typeahead.js.zip
 [bloodhound.js]: http://twitter.github.com/typeahead.js/releases/latest/bloodhound.js
+[boomer.js]: https://raw.githubusercontent.com/carezone/typeahead.js/master/dist/boomer.js
+[boomer-min.js]: https://raw.githubusercontent.com/carezone/typeahead.js/master/dist/boomer-min.js
 [typeahead.jquery.js]: http://twitter.github.com/typeahead.js/releases/latest/typeahead.jquery.js
 [typeahead.bundle.js]: http://twitter.github.com/typeahead.js/releases/latest/typeahead.bundle.js
 [typeahead.bundle.min.js]: http://twitter.github.com/typeahead.js/releases/latest/typeahead.bundle.min.js
